@@ -1363,6 +1363,36 @@ See `ivy-format-functions-alist' for further information."
                res))))
     res))
 
+;;* `swiper-projectile'
+(defun swiper-projectile-function (str)
+  "Search in buffers of the current project for STR.
+
+When invoked in a buffer that is not part of a projectile
+project, all open buffers are used."
+  (let ((buffers (if (and (fboundp 'projectile-project-p)
+                          (fboundp 'projectile-project-buffers)
+                          (projectile-project-p))
+                     (projectile-project-buffers)
+                   (buffer-list))))
+    (swiper-all-buffers-function str buffers)))
+
+;;;###autoload
+(defun swiper-projectile (&optional initial-input)
+  "Run `swiper' for all open buffers in the current project."
+  (interactive)
+  (let ((swiper-window-width (- (frame-width) (if (display-graphic-p) 0 1))))
+    (ivy-read "swiper-projectile: " 'swiper-projectile-function
+              :action #'swiper-all-action
+              :dynamic-collection t
+              :keymap swiper-all-map
+              :initial-input initial-input
+              :caller 'swiper-projectile)))
+
+(ivy-configure 'swiper-projectile
+  :update-fn 'auto
+  :unwind-fn #'swiper--cleanup
+  :format-fn #'swiper--all-format-function)
+
 ;;* `swiper-isearch'
 (defun swiper-isearch-function (str)
   "Collect STR matches in the current buffer for `swiper-isearch'."
